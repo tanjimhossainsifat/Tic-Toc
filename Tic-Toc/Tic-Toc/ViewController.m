@@ -14,11 +14,26 @@
 
 @end
 
-@implementation ViewController
+@implementation ViewController {
+    CAShapeLayer *secondHandLayer;
+    CAShapeLayer *minuteHandLayer;
+    CAShapeLayer *hourHandLayer;
+    
+    CGPoint clockCenter;
+    
+    CGFloat secondHandLength;
+    CGFloat minuteHandLength;
+    CGFloat hourHandLength;
+    
+    CGFloat currentSecondHandAngel;
+    CGFloat currentMinuteHandAngel;
+    CGFloat currentHourHandAngel;
+}
 
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self initBackground];
+    [self initCurrentClockView];
 }
 
 #pragma mark - UI related methods
@@ -32,11 +47,91 @@
     clockImageView.image = [UIImage imageNamed:@"clock"];
     [self.clockView insertSubview:clockImageView atIndex:0];
     
+    clockCenter = CGPointMake(self.clockView.frame.size.width/2, self.clockView.frame.size.height/2);
+    secondHandLength = self.clockView.frame.size.width/2 - 30;
+    minuteHandLength = self.clockView.frame.size.width/2 - 40;
+    hourHandLength = self.clockView.frame.size.width/2 - 60;
+    
     dispatch_async(dispatch_get_main_queue(), ^{
         [self.view addSubview:self.clockView];
     });
     
 }
 
+-(void) initCurrentClockView {
+    [self initCurrentTime];
+    
+    secondHandLayer = [[CAShapeLayer alloc] init];
+    minuteHandLayer = [[CAShapeLayer alloc] init];
+    hourHandLayer = [[CAShapeLayer alloc] init];
+    
+    [secondHandLayer setLineWidth:1];
+    [minuteHandLayer setLineWidth:3];
+    [hourHandLayer setLineWidth:5];
+    
+    [secondHandLayer setStrokeColor:[UIColor blackColor].CGColor];
+    [minuteHandLayer setStrokeColor:[UIColor blackColor].CGColor];
+    [hourHandLayer setStrokeColor:[UIColor blackColor].CGColor];
+    
+    [self.clockView.layer addSublayer:secondHandLayer];
+    [self.clockView.layer addSublayer:minuteHandLayer];
+    [self.clockView.layer addSublayer:hourHandLayer];
+    
+    [self drawClockView];
+}
+
+-(void) drawClockView {
+    
+    UIBezierPath *helperPath = [UIBezierPath bezierPath];
+    UIBezierPath *secondHandPath = [UIBezierPath bezierPath];
+    UIBezierPath *minuteHandPath = [UIBezierPath bezierPath];
+    UIBezierPath *hourHandPath = [UIBezierPath bezierPath];
+    
+    [secondHandPath moveToPoint:clockCenter];
+    [minuteHandPath moveToPoint:clockCenter];
+    [hourHandPath moveToPoint:clockCenter];
+    
+    [helperPath addArcWithCenter:clockCenter radius:secondHandLength startAngle:0 endAngle:(currentSecondHandAngel*M_PI)/180 clockwise:NO];
+    [secondHandPath addLineToPoint:[helperPath currentPoint]];
+    
+    [helperPath addArcWithCenter:clockCenter radius:minuteHandLength startAngle:0 endAngle:(currentMinuteHandAngel*M_PI)/180 clockwise:NO];
+    [minuteHandPath addLineToPoint:[helperPath currentPoint]];
+    
+    [helperPath addArcWithCenter:clockCenter radius:hourHandLength startAngle:0 endAngle:(currentHourHandAngel*M_PI)/180 clockwise:NO];
+    [hourHandPath addLineToPoint:[helperPath currentPoint]];
+    
+    secondHandLayer.path = secondHandPath.CGPath;
+    minuteHandLayer.path = minuteHandPath.CGPath;
+    hourHandLayer.path = hourHandPath.CGPath;
+}
+
+#pragma mark - private methods
+
+-(void) initCurrentTime {
+    
+    NSDate *currentTime = [NSDate date];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    [dateFormatter setDateFormat:@"hh:mm:ss"];
+    NSString *resultString = [dateFormatter stringFromDate: currentTime];
+    
+    NSArray *timeEachPart = [resultString componentsSeparatedByString:@":"];
+    int hour = [[timeEachPart objectAtIndex:0] intValue];
+    int minute = [[timeEachPart objectAtIndex:1] intValue];
+    int second = [[timeEachPart objectAtIndex:2] intValue];
+    
+    NSLog(@"%d:%d:%d",hour,minute,second);
+    
+    int timeInSeconds = hour*3600+minute*60+second;
+    
+    CGFloat initialAngleSecond = (360.0/60)*timeInSeconds;
+    CGFloat initialAngleMinute = (360.0/3600)*timeInSeconds;
+    CGFloat initialAngleHour = (360.0/43200)*timeInSeconds;
+    
+    NSLog(@"%f:%f:%f",initialAngleHour, initialAngleMinute, initialAngleSecond);
+    
+    currentSecondHandAngel = initialAngleSecond  - 90;
+    currentMinuteHandAngel = initialAngleMinute - 90;
+    currentHourHandAngel = initialAngleHour - 90;
+}
 
 @end
