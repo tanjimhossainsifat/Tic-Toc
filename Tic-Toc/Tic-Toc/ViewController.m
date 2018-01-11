@@ -28,6 +28,8 @@
     CGFloat currentSecondHandAngel;
     CGFloat currentMinuteHandAngel;
     CGFloat currentHourHandAngel;
+    
+    int timeInSeconds;
 }
 
 - (void)viewDidLoad {
@@ -59,8 +61,6 @@
 }
 
 -(void) initCurrentClockView {
-    [self initCurrentTime];
-    
     secondHandLayer = [[CAShapeLayer alloc] init];
     minuteHandLayer = [[CAShapeLayer alloc] init];
     hourHandLayer = [[CAShapeLayer alloc] init];
@@ -77,7 +77,11 @@
     [self.clockView.layer addSublayer:minuteHandLayer];
     [self.clockView.layer addSublayer:hourHandLayer];
     
-    [self drawClockView];
+    [self initCurrentTime];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self drawClockView];
+    });
+    
 }
 
 -(void) drawClockView {
@@ -103,6 +107,15 @@
     secondHandLayer.path = secondHandPath.CGPath;
     minuteHandLayer.path = minuteHandPath.CGPath;
     hourHandLayer.path = hourHandPath.CGPath;
+    
+    timeInSeconds++;
+
+    [self updateAngelsForCurrentTime];
+    
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1*NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        [self drawClockView];
+    });
 }
 
 #pragma mark - private methods
@@ -121,17 +134,22 @@
     
     NSLog(@"%d:%d:%d",hour,minute,second);
     
-    int timeInSeconds = hour*3600+minute*60+second;
+    timeInSeconds = hour*3600+minute*60+second;
     
-    CGFloat initialAngleSecond = (360.0/60)*timeInSeconds;
-    CGFloat initialAngleMinute = (360.0/3600)*timeInSeconds;
-    CGFloat initialAngleHour = (360.0/43200)*timeInSeconds;
+    [self updateAngelsForCurrentTime];
+}
+
+-(void) updateAngelsForCurrentTime {
     
-    NSLog(@"%f:%f:%f",initialAngleHour, initialAngleMinute, initialAngleSecond);
+    CGFloat angleInSecond = (360.0/60)*timeInSeconds;
+    CGFloat angleInMinute = (360.0/3600)*timeInSeconds;
+    CGFloat angleInHour = (360.0/43200)*timeInSeconds;
     
-    currentSecondHandAngel = initialAngleSecond  - 90;
-    currentMinuteHandAngel = initialAngleMinute - 90;
-    currentHourHandAngel = initialAngleHour - 90;
+    //NSLog(@"%f:%f:%f",angleInHour, angleInMinute, angleInSecond);
+    
+    currentSecondHandAngel = angleInSecond  - 90;
+    currentMinuteHandAngel = angleInMinute - 90;
+    currentHourHandAngel = angleInHour - 90;
 }
 
 @end
