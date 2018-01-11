@@ -1,4 +1,4 @@
 # Tic-Toc
 A simple analogue clock
 
-![Demo](Screenshot.png)
+![Screenshot](Demo/Screenshot.png)
